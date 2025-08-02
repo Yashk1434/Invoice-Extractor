@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Invoice Processor{% endblock %}
+
+{% block page_title %}Dashboard{% endblock %}
+{% block page_description %}Overview of your invoice processing activities{% endblock %}
+
+{% block content %}
+<!-- Statistics Cards -->
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-number">{{ stats.total_uploads }}</div>
+        <div class="stat-label">Total Uploads</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-number">{{ stats.total_extractions }}</div>
+        <div class="stat-label">Successful Extractions</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-number">{{ stats.success_rate }}%</div>
+        <div class="stat-label">Success Rate</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-number">{{ stats.recent_files|length }}</div>
+        <div class="stat-label">Recent Files</div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="modern-card">
+    <div class="card-header">
+        <i class="fas fa-bolt"></i>
+        <h3>Quick Actions</h3>
+    </div>
+    <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+        <a href="{{ url_for('extraction') }}" class="modern-btn btn-primary">
+            <i class="fas fa-upload"></i>
+            Upload & Extract
+        </a>
+        <a href="{{ url_for('visualization') }}" class="modern-btn btn-success">
+            <i class="fas fa-chart-line"></i>
+            View Analytics
+        </a>
+    </div>
+</div>
+{% endblock %}

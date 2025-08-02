@@ -1,0 +1,288 @@
+{% extends "base.html" %}
+
+{% block title %}Extraction - Invoice Processor{% endblock %}
+
+{% block page_title %}Document Extraction{% endblock %}
+{% block page_description %}Upload and process your invoice documents{% endblock %}
+
+{% block content %}
+<!-- Upload Section -->
+<div class="modern-card">
+    <div class="card-header">
+        <i class="fas fa-cloud-upload-alt"></i>
+        <h3>Upload Documents</h3>
+    </div>
+
+    <form action="{{ url_for('upload_file') }}" method="post" enctype="multipart/form-data">
+        <div class="upload-area">
+            <i class="fas fa-file-pdf" style="font-size: 3rem; color: var(--primary-color); margin-bottom: 1rem;"></i>
+            <h4>Choose a PDF file to upload</h4>
+            <p style="color: #6c757d; margin: 1rem 0;">Supported formats: PDF only</p>
+
+            <input type="file" name="file" accept=".pdf" required
+                   style="margin: 1rem 0; padding: 0.5rem; border: 2px solid var(--primary-color); border-radius: 8px; background: white;">
+
+            <br>
+            <button type="submit" class="modern-btn btn-success">
+                <i class="fas fa-upload"></i>
+                Upload File
+            </button>
+        </div>
+    </form>
+</div>
+
+<!-- Processing Methods Section -->
+<div class="modern-card">
+    <div class="card-header">
+        <i class="fas fa-cogs"></i>
+        <h3>Select Processing Method</h3>
+    </div>
+
+    <div style="margin-bottom: 2rem;">
+        <h4 style="margin-bottom: 1rem;">Manual Based Methods</h4>
+        <div class="simple-method-grid">
+
+            <label class="method-option">
+                <input type="radio" name="method" value="onemg" onchange="handleMethodChange()">
+                <span class="method-label">💊 1mg</span>
+            </label>
+            <label class="method-option">
+                <input type="radio" name="method" value="swiggy" onchange="handleMethodChange()">
+                <span class="method-label">🍕 Swiggy</span>
+            </label>
+            <label class="method-option">
+                <input type="radio" name="method" value="reliance_digital" onchange="handleMethodChange()">
+                <span class="method-label">🔌 Reliance Digital</span>
+            </label>
+        </div>
+    </div>
+
+    <div style="margin-bottom: 2rem;">
+        <h4 style="margin-bottom: 1rem;">AI Based Processing</h4>
+        <div class="simple-method-grid">
+            <label class="method-option">
+                <input type="radio" name="method" value="fast_vlm" onchange="handleMethodChange()">
+                <span class="method-label">🤖 FastVLM</span>
+            </label>
+        </div>
+    </div>
+
+    <div id="selected-method" style="display: none; padding: 1rem; background: #d1e7dd; border-radius: 8px; margin-top: 1rem;">
+        <strong>✅ Selected Method: <span id="selected-method-name"></span></strong>
+    </div>
+</div>
+
+<!-- Uploaded Documents Section -->
+<div class="modern-card">
+    <div class="card-header">
+        <i class="fas fa-folder-open"></i>
+        <h3>Uploaded Documents</h3>
+    </div>
+
+    {% if uploaded_files %}
+        <div class="file-grid">
+            {% for file in uploaded_files %}
+                <div class="file-card">
+                    <div class="file-header">
+                        <div class="file-icon">
+                            <i class="fas fa-file-pdf"></i>
+                        </div>
+                        <div class="file-info">
+                            <h4>{{ file.name }}</h4>
+                            <div class="file-meta">{{ file.size }} • {{ file.timestamp }}</div>
+                        </div>
+                    </div>
+                    <div class="file-actions">
+                        <a href="{{ url_for('uploaded_file', filename=file.name) }}" target="_blank" class="action-btn btn-primary">
+                            <i class="fas fa-eye"></i> View
+                        </a>
+                        <button class="action-btn btn-success process-btn" data-filename="{{ file.name }}" onclick="processFile('{{ file.name }}')">
+                            <i class="fas fa-cog"></i> Process
+                        </button>
+                        <form action="{{ url_for('delete_upload', filename=file.name) }}" method="post" style="display:inline;">
+                            <button type="submit" class="action-btn btn-danger" onclick="return confirm('Delete this file?')">
+                                <i class="fas fa-trash"></i> Delete
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div style="text-align: center; padding: 3rem; color: #6c757d;">
+            <i class="fas fa-inbox" style="font-size: 3rem; margin-bottom: 1rem;"></i>
+            <h4>No files uploaded yet</h4>
+            <p>Upload your first PDF document to get started</p>
+        </div>
+    {% endif %}
+</div>
+
+<!-- Generated Excel Files Section -->
+<div class="modern-card" id="excel-files">
+    <div class="card-header">
+        <i class="fas fa-file-excel"></i>
+        <h3>Generated Excel Files</h3>
+    </div>
+
+    {% if excel_files %}
+        <div class="file-grid">
+            {% for file in excel_files %}
+                <div class="file-card">
+                    <div class="file-header">
+                        <div class="file-icon" style="color: #198754;">
+                            <i class="fas fa-file-excel"></i>
+                        </div>
+                        <div class="file-info">
+                            <h4>{{ file.name }}</h4>
+                            <div class="file-meta">{{ file.size }} • {{ file.timestamp }} • {{ file.sheets }}</div>
+                        </div>
+                    </div>
+                    <div class="file-actions">
+                        <a href="{{ url_for('preview_excel', filename=file.name) }}" target="_blank" class="action-btn btn-primary">
+                            <i class="fas fa-eye"></i> View
+                        </a>
+                        <a href="{{ url_for('excel_file', filename=file.name) }}" download class="action-btn btn-outline">
+                            <i class="fas fa-download"></i> Download
+                        </a>
+                        <form action="{{ url_for('delete_excel', filename=file.name) }}" method="post" style="display:inline;">
+                            <button type="submit" class="action-btn btn-danger" onclick="return confirm('Delete this file?')">
+                                <i class="fas fa-trash"></i> Delete
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div style="text-align: center; padding: 3rem; color: #6c757d;">
+            <i class="fas fa-chart-bar" style="font-size: 3rem; margin-bottom: 1rem;"></i>
+            <h4>No Excel files generated yet</h4>
+            <p>Process your documents to generate Excel reports</p>
+        </div>
+    {% endif %}
+</div>
+
+<!-- JavaScript moved to inline to ensure it loads -->
+<script>
+// Global variables
+let selectedMethod = null;
+
+// Debug function to test if script is loaded
+console.log('Extraction page script loaded successfully');
+
+// Handle method change
+function handleMethodChange() {
+    const checkedRadio = document.querySelector('input[name="method"]:checked');
+
+    if (checkedRadio) {
+        selectedMethod = checkedRadio.value;
+
+        // Show selected method
+        const selectedDiv = document.getElementById('selected-method');
+        const selectedName = document.getElementById('selected-method-name');
+
+        if (selectedDiv && selectedName) {
+            selectedDiv.style.display = 'block';
+            selectedName.textContent = selectedMethod;
+        }
+
+        console.log('Selected method:', selectedMethod);
+    }
+}
+
+// File processing function
+function processFile(filename) {
+    console.log('Process button clicked for:', filename);
+    console.log('Current selected method:', selectedMethod);
+
+    if (!selectedMethod) {
+        alert('Please select a processing method first!');
+        console.log('No method selected - stopping process');
+        return;
+    }
+
+    if (confirm(`Process ${filename} with ${selectedMethod}?`)) {
+        console.log('User confirmed processing');
+
+        // Find the clicked button
+        const btn = event.target.closest('button');
+        if (!btn) {
+            console.error('Could not find button element');
+            return;
+        }
+
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+        btn.disabled = true;
+
+        console.log('Sending request to:', `/process/${selectedMethod}/${filename}`);
+
+        fetch(`/process/${selectedMethod}/${filename}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => {
+            console.log('Response status:', response.status);
+            console.log('Response ok:', response.ok);
+
+            if (response.ok) {
+                console.log('Processing successful, reloading page');
+                location.reload();
+            } else {
+                throw new Error(`HTTP ${response.status}: Processing failed`);
+            }
+        })
+        .catch(error => {
+            console.error('Processing error:', error);
+            alert('Error processing file: ' + error.message);
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        });
+    } else {
+        console.log('User cancelled processing');
+    }
+}
+
+// Test functions for console debugging
+window.testProcessFile = function(filename) {
+    processFile(filename || 'test.pdf');
+};
+
+window.testMethodSelection = function(method) {
+    const radio = document.querySelector(`input[name="method"][value="${method}"]`);
+    if (radio) {
+        radio.checked = true;
+        handleMethodChange();
+        console.log('Method set to:', method);
+    } else {
+        console.log('Method not found:', method);
+    }
+};
+
+// Initialize when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM loaded - setting up event listeners');
+
+    // Check if elements exist
+    const processButtons = document.querySelectorAll('.process-btn');
+    const methodRadios = document.querySelectorAll('input[name="method"]');
+
+    console.log('Found process buttons:', processButtons.length);
+    console.log('Found method radios:', methodRadios.length);
+
+    // Add backup event listeners (in case onclick doesn't work)
+    processButtons.forEach((btn, index) => {
+        const filename = btn.getAttribute('data-filename');
+        console.log(`Button ${index}: ${filename}`);
+
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            console.log('Backup event listener triggered for:', filename);
+            processFile(filename);
+        });
+    });
+});
+</script>
+{% endblock %}

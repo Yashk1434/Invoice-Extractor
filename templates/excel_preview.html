@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Excel Preview - {{ filename }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="excel-preview-container">
+        <!-- Modern Header -->
+        <div class="excel-header">
+            <div class="header-left">
+                <div class="file-icon">
+                    <i class="fas fa-file-excel" style="color: #198754; font-size: 1.5rem; margin-right: 1rem;"></i>
+                </div>
+                <div class="file-info">
+                    <h2>{{ filename }}</h2>
+                    <p>Excel File Preview</p>
+                </div>
+            </div>
+            <div class="header-actions">
+                <a href="{{ url_for('excel_file', filename=filename) }}" download class="modern-btn btn-outline">
+                    <i class="fas fa-download"></i>
+                    Download
+                </a>
+                <button onclick="window.close()" class="modern-btn btn-danger">
+                    <i class="fas fa-times"></i>
+                    Close
+                </button>
+            </div>
+        </div>
+
+        {% if error %}
+            <div class="modern-card" style="margin: 2rem;">
+                <div class="error-message">
+                    <i class="fas fa-exclamation-triangle" style="font-size: 3rem; color: var(--danger-color); margin-bottom: 1rem;"></i>
+                    <h3>Error Loading Excel File</h3>
+                    <p>{{ error }}</p>
+                    <button onclick="window.close()" class="modern-btn btn-primary" style="margin-top: 1rem;">
+                        <i class="fas fa-arrow-left"></i>
+                        Go Back
+                    </button>
+                </div>
+            </div>
+        {% else %}
+            <!-- Sheet Navigation -->
+            <div class="sheet-navigation">
+                <div class="sheet-tabs">
+                    {% for sheet_name in sheet_names %}
+                        <button class="sheet-tab {% if loop.first %}active{% endif %}"
+                                onclick="switchSheet('{{ sheet_name }}', '{{ filename }}')"
+                                data-sheet="{{ sheet_name }}">
+                            <i class="fas fa-table"></i>
+                            {{ sheet_name }}
+                        </button>
+                    {% endfor %}
+                </div>
+
+                <div class="sheet-info">
+                    <i class="fas fa-info-circle"></i>
+                    <span id="sheet-info">Loading...</span>
+                </div>
+            </div>
+
+            <!-- Sheet Content -->
+            <div class="sheet-content">
+                <div class="table-container">
+                    <div id="sheet-data">
+                        {% if sheet_data %}
+                            {% for sheet_name, df in sheet_data.items() %}
+                                <div class="sheet-panel {% if loop.first %}active{% endif %}" id="panel-{{ sheet_name }}">
+                                    <div class="table-wrapper">
+                                        {{ df.to_html(classes='excel-table', table_id='table-' + sheet_name, escape=False, index=False)|safe }}
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+
+    <script>
+        function switchSheet(sheetName, filename) {
+            console.log('Switching to sheet:', sheetName);
+
+            // Update active tab
+            document.querySelectorAll('.sheet-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+
+            const activeTab = document.querySelector(`[data-sheet="${sheetName}"]`);
+            if (activeTab) {
+                activeTab.classList.add('active');
+            }
+
+            // Hide all panels
+            document.querySelectorAll('.sheet-panel').forEach(panel => {
+                panel.classList.remove('active');
+            });
+
+            // Show selected panel
+            const panel = document.getElementById(`panel-${sheetName}`);
+            if (panel) {
+                panel.classList.add('active');
+                updateSheetInfo(panel);
+            } else {
+                // Load sheet data via API if not already loaded
+                loadSheetData(sheetName, filename);
+            }
+        }
+
+        function updateSheetInfo(panel) {
+            const table = panel.querySelector('table');
+            if (table) {
+                const rows = table.querySelectorAll('tbody tr').length;
+                const cols = table.querySelectorAll('thead th').length ||
+                            table.querySelectorAll('tbody tr:first-child td').length;
+                document.getElementById('sheet-info').textContent = `${rows} rows × ${cols} columns`;
+            }
+        }
+
+        function loadSheetData(sheetName, filename) {
+            const sheetData = document.getElementById('sheet-data');
+            sheetData.innerHTML = `
+                <div class="loading-container">
+                    <div class="loading-spinner">
+                        <i class="fas fa-spinner fa-spin" style="font-size: 2rem; color: var(--primary-color);"></i>
+                    </div>
+                    <p>Loading sheet data...</p>
+                </div>
+            `;
+
+            fetch(`/api/excel_sheet/${filename}/${sheetName}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        sheetData.innerHTML = `
+                            <div class="sheet-panel active" id="panel-${sheetName}">
+                                <div class="table-wrapper">
+                                    ${data.html}
+                                </div>
+                            </div>
+                        `;
+
+                        document.getElementById('sheet-info').textContent =
+                            `${data.records} rows × ${data.columns} columns`;
+                    } else {
+                        sheetData.innerHTML = `
+                            <div class="error-container">
+                                <i class="fas fa-exclamation-triangle" style="font-size: 2rem; color: var(--danger-color); margin-bottom: 1rem;"></i>
+                                <h4>Error Loading Sheet</h4>
+                                <p>${data.error}</p>
+                            </div>
+                        `;
+                    }
+                })
+                .catch(error => {
+                    sheetData.innerHTML = `
+                        <div class="error-container">
+                            <i class="fas fa-wifi" style="font-size: 2rem; color: var(--danger-color); margin-bottom: 1rem;"></i>
+                            <h4>Network Error</h4>
+                            <p>Error loading data: ${error.message}</p>
+                            <button onclick="loadSheetData('${sheetName}', '${filename}')" class="modern-btn btn-primary">
+                                <i class="fas fa-refresh"></i>
+                                Retry
+                            </button>
+                        </div>
+                    `;
+                });
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Excel preview loaded');
+
+            const firstTab = document.querySelector('.sheet-tab.active');
+            if (firstTab) {
+                const sheetName = firstTab.getAttribute('data-sheet');
+                const firstPanel = document.getElementById(`panel-${sheetName}`);
+                if (firstPanel) {
+                    updateSheetInfo(firstPanel);
+                }
+            }
+        });
+
+        // Handle keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                window.close();
+            }
+        });
+    </script>
+</body>
+</html>
