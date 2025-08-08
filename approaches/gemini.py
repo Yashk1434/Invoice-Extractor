@@ -4,7 +4,7 @@ import google.generativeai as genai
 from langchain_community.document_loaders import PyPDFLoader
 
 # ----- Configuration -----
-API_KEY = 'AIzaSyDymP6gj8KCkP5LsUSwezh-C9CYp9Lc8Aw'
+API_KEY = ''
 UPLOAD_FOLDER = "uploads"
 EXCEL_FOLDER = "extracted_excels"
 os.makedirs(EXCEL_FOLDER, exist_ok=True)
