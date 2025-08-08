@@ -1,288 +1,406 @@
 {% extends "base.html" %}
 
 {% block title %}Extraction - Invoice Processor{% endblock %}
-
 {% block page_title %}Document Extraction{% endblock %}
 {% block page_description %}Upload and process your invoice documents{% endblock %}
 
 {% block content %}
-<!-- Upload Section -->
-<div class="modern-card">
-    <div class="card-header">
-        <i class="fas fa-cloud-upload-alt"></i>
-        <h3>Upload Documents</h3>
-    </div>
+<style>
+.layout-main {
+  min-height: 84vh;
+  height: 84vh;
+  display: grid;
+  grid-template-columns: minmax(410px, 480px) 1fr;  /* W I D E left, right moderate */
+  grid-template-rows: 1fr minmax(240px, 0.35fr);
+  grid-template-areas:
+    "left preview"
+    "bottom bottom";
+  gap: 1.35rem;
+}
+.left-col {
+  grid-area: left;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+}
+.upload-section {
+  margin-bottom: 1.2rem;
+}
+.process-section {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  margin-bottom: 0.6rem;
+}
+.preview-col {
+  grid-area: preview;
+  position: relative;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  background: #f9fafb;
+  border: 2px solid #dae3eb;
+  border-radius: 12px;
+  box-shadow: 0 3px 16px #ecf2f6;
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  overflow: hidden;
+  font-size: 0.98rem;
+}
+#document-preview-frame {
+  width: 100%;
+  height: 100%;
+  border: none;
+  background: white;
+}
+#document-preview-placeholder {
+  width: 100%; height: 100%;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  color: #bcc1c8; font-size: 1.08rem;
+}
+.bottom-row {
+  grid-area: bottom;
+  display: flex;
+  flex-direction: row;
+  gap: 1.35rem;
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+}
+.bottom-left, .bottom-right {
+  width: 50%;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: auto;
+}
+.file-actions .action-btn { margin-right: 0.3em; }
+/* Responsive for mobile/tablet */
+@media (max-width: 900px) {
+  .layout-main {
+    display: flex; flex-direction: column; height: auto; min-height: 0;
+  }
+  .left-col, .preview-col, .bottom-row, .bottom-left, .bottom-right {
+    width: 100% !important; min-width: 0 !important;
+  }
+  .bottom-row { flex-direction: column; gap: 1rem;}
+}
+</style>
 
-    <form action="{{ url_for('upload_file') }}" method="post" enctype="multipart/form-data">
-        <div class="upload-area">
-            <i class="fas fa-file-pdf" style="font-size: 3rem; color: var(--primary-color); margin-bottom: 1rem;"></i>
-            <h4>Choose a PDF file to upload</h4>
-            <p style="color: #6c757d; margin: 1rem 0;">Supported formats: PDF only</p>
+<div class="layout-main">
 
+  <!-- Left SIDEBAR: Upload (small) + Select Method -->
+  <div class="left-col">
+
+    <!-- Upload section (small) -->
+    <div class="upload-section">
+      <div class="modern-card">
+        <div class="card-header">
+          <i class="fas fa-cloud-upload-alt"></i>
+          <h3 style="font-size:1.15rem;">Upload</h3>
+        </div>
+        <form action="{{ url_for('upload_file') }}" method="post" enctype="multipart/form-data">
+          <div class="upload-area" style="padding-top:4px; padding-bottom:2px;">
             <input type="file" name="file" accept=".pdf" required
-                   style="margin: 1rem 0; padding: 0.5rem; border: 2px solid var(--primary-color); border-radius: 8px; background: white;">
-
-            <br>
-            <button type="submit" class="modern-btn btn-success">
-                <i class="fas fa-upload"></i>
-                Upload File
+                   style="margin: 0.1rem 0 0.9rem 0; padding: 0.45rem; border: 2px solid var(--primary-color); border-radius: 8px; background: white; font-size:0.95rem;">
+            <button type="submit" class="modern-btn btn-success btn-block" style="width:60%;margin-top:-1px;">
+              <i class="fas fa-upload"></i> Upload PDF
             </button>
+            <p style="color: #6c757d; font-size: 0.98rem; margin: 0.44rem 0 0 0;">PDF only</p>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Processing methods (fills the rest of column) -->
+    <div class="process-section">
+      <div class="modern-card" style="height:100%;">
+        <div class="card-header">
+          <i class="fas fa-cogs"></i>
+          <h3 style="font-size:1.13rem;">Select Processing Method</h3>
         </div>
-    </form>
-</div>
-
-<!-- Processing Methods Section -->
-<div class="modern-card">
-    <div class="card-header">
-        <i class="fas fa-cogs"></i>
-        <h3>Select Processing Method</h3>
-    </div>
-
-    <div style="margin-bottom: 2rem;">
-        <h4 style="margin-bottom: 1rem;">Manual Based Methods</h4>
-        <div class="simple-method-grid">
-
-            <label class="method-option">
-                <input type="radio" name="method" value="onemg" onchange="handleMethodChange()">
-                <span class="method-label">💊 1mg</span>
-            </label>
-            <label class="method-option">
-                <input type="radio" name="method" value="swiggy" onchange="handleMethodChange()">
-                <span class="method-label">🍕 Swiggy</span>
-            </label>
-            <label class="method-option">
-                <input type="radio" name="method" value="reliance_digital" onchange="handleMethodChange()">
-                <span class="method-label">🔌 Reliance Digital</span>
-            </label>
-        </div>
-    </div>
-
-    <div style="margin-bottom: 2rem;">
-        <h4 style="margin-bottom: 1rem;">AI Based Processing</h4>
-        <div class="simple-method-grid">
-            <label class="method-option">
-                <input type="radio" name="method" value="fast_vlm" onchange="handleMethodChange()">
-                <span class="method-label">🤖 FastVLM</span>
-            </label>
-        </div>
-    </div>
-
-    <div id="selected-method" style="display: none; padding: 1rem; background: #d1e7dd; border-radius: 8px; margin-top: 1rem;">
-        <strong>✅ Selected Method: <span id="selected-method-name"></span></strong>
-    </div>
-</div>
-
-<!-- Uploaded Documents Section -->
-<div class="modern-card">
-    <div class="card-header">
-        <i class="fas fa-folder-open"></i>
-        <h3>Uploaded Documents</h3>
-    </div>
-
-    {% if uploaded_files %}
-        <div class="file-grid">
-            {% for file in uploaded_files %}
-                <div class="file-card">
-                    <div class="file-header">
-                        <div class="file-icon">
-                            <i class="fas fa-file-pdf"></i>
-                        </div>
-                        <div class="file-info">
-                            <h4>{{ file.name }}</h4>
-                            <div class="file-meta">{{ file.size }} • {{ file.timestamp }}</div>
-                        </div>
-                    </div>
-                    <div class="file-actions">
-                        <a href="{{ url_for('uploaded_file', filename=file.name) }}" target="_blank" class="action-btn btn-primary">
-                            <i class="fas fa-eye"></i> View
-                        </a>
-                        <button class="action-btn btn-success process-btn" data-filename="{{ file.name }}" onclick="processFile('{{ file.name }}')">
-                            <i class="fas fa-cog"></i> Process
-                        </button>
-                        <form action="{{ url_for('delete_upload', filename=file.name) }}" method="post" style="display:inline;">
-                            <button type="submit" class="action-btn btn-danger" onclick="return confirm('Delete this file?')">
-                                <i class="fas fa-trash"></i> Delete
-                            </button>
-                        </form>
-                    </div>
-                </div>
+        <div>
+          <h4 style="margin-top:1.1rem; margin-bottom:0.7rem; font-size:1.01rem;">Manual Based Methods</h4>
+          <div class="simple-method-grid">
+            {% for label, value in [
+              ("💊 1mg", "onemg"), ("🍔 Swiggy", "swiggy"), ("💻 Reliance Digital", "reliance_digital"),
+              ("🍽️ Zomato", "zomato"), ("📦 Amazon", "amazon"), ("🛒 Flipkart", "flipkart"),
+              ("⚡ Blinkit", "blinkit"), ("🛍️ Instamart", "instamart"), ("🎁 Meesho", "meesho"), ("👗 Myntra", "myntra"),
+              ("🌍 Universal 1", "universal1"), ("🌍 Universal 2", "universal2")
+            ] %}
+              <label class="method-option">
+                <input type="radio" name="method" value="{{ value }}" onchange="handleMethodChange()">
+                <span class="method-label">{{ label }}</span>
+              </label>
+              <!-- {% if loop.index in [5, 10] %}<br style="flex-basis: 100%; height: 0;">{% endif %} -->
+               {% if loop.index == 6 or loop.index == 11 %}
+                <br style="flex-basis: 100%; height: 0;">
+                {% endif %}
             {% endfor %}
+          </div>
         </div>
-    {% else %}
-        <div style="text-align: center; padding: 3rem; color: #6c757d;">
-            <i class="fas fa-inbox" style="font-size: 3rem; margin-bottom: 1rem;"></i>
+        <div style="margin-bottom: 1.2rem; margin-top: 1.3rem;">
+          <h4 style="margin-bottom:0.7rem;font-size:1.01rem;">Open source methods</h4>
+          <div class="simple-method-grid">
+            <label class="method-option">
+              <input type="radio" name="method" value="fast_vlm" onchange="handleMethodChange()">
+              <span class="method-label"> 📃 Docling</span>
+            </label>
+            <label class="method-option">
+              <input type="radio" name="method" value="flan" onchange="handleMethodChange()">
+              <span class="method-label"> ⛏️ Mineru</span>
+            </label>
+            <label class="method-option">
+              <input type="radio" name="method" value="flan" onchange="handleMethodChange()">
+              <span class="method-label"> 🖼️ Yolo</span>
+            </label>
+          </div>
+        </div>
+        <div style="margin-bottom:1.2rem;">
+          <h4 style="margin-bottom:0.7rem;font-size:1.01rem;">AI Based Processing</h4>
+          <div class="simple-method-grid">
+            <label class="method-option">
+              <input type="radio" name="method" value="fast_vlm" onchange="handleMethodChange()">
+              <span class="method-label">🤖 FastVLM</span>
+            </label>
+            <label class="method-option">
+              <input type="radio" name="method" value="flan" onchange="handleMethodChange()">
+              <span class="method-label">🤖 FLAN</span>
+            </label>
+            <label class="method-option">
+              <input type="radio" name="method" value="gemini" onchange="handleMethodChange()">
+              <span class="method-label">🤖 Gemini</span>
+            </label>
+            <label class="method-option">
+              <input type="radio" name="method" value="flan" onchange="handleMethodChange()">
+              <span class="method-label">🤖 LLama</span>
+            </label>
+            <label class="method-option">
+              <input type="radio" name="method" value="flan" onchange="handleMethodChange()">
+              <span class="method-label">🤖 Qwen</span>
+            </label>
+          </div>
+        </div>
+        <div id="selected-method" style="display: none; padding: 1rem; background: #d1e7dd; border-radius: 8px; margin-top: 1rem;">
+          <strong>✅ Selected Method: <span id="selected-method-name"></span></strong>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT: Preview (moderate width, but plenty space) -->
+  <div class="preview-col">
+    <div id="document-preview-area" style="width: 100%; height: 100%;">
+      <div id="document-preview-placeholder">
+        <i class="fas fa-eye" style="font-size: 2.2rem; color: #c2c7cc;"></i>
+        <div style="margin-top:16px;">No document selected.<br>
+          Click "View" on a PDF/Excel to preview here.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom row: Uploaded docs and Excels -->
+  <div class="bottom-row">
+    <!-- Left: Uploaded Docs -->
+    <div class="bottom-left">
+      <div class="modern-card">
+        <div class="card-header">
+          <i class="fas fa-folder-open"></i>
+          <h3>Uploaded Documents</h3>
+        </div>
+        {% if uploaded_files %}
+          <div class="file-grid">
+            {% for file in uploaded_files %}
+              <div class="file-card">
+                <div class="file-header">
+                  <div class="file-icon"><i class="fas fa-file-pdf"></i></div>
+                  <div class="file-info">
+                    <h4>{{ file.name }}</h4>
+                    <div class="file-meta">{{ file.size }} • {{ file.timestamp }}</div>
+                  </div>
+                </div>
+                <div class="file-actions">
+                  <button class="action-btn btn-primary"
+                          onclick="previewFile('{{ url_for('uploaded_file', filename=file.name) }}', '{{ file.name }}', 'pdf')">
+                      <i class="fas fa-eye"></i> View
+                  </button>
+                  <button class="action-btn btn-success process-btn" data-filename="{{ file.name }}">
+                    <i class="fas fa-cog"></i> Process
+                  </button>
+                  <form action="{{ url_for('delete_upload', filename=file.name) }}" method="post" style="display:inline;">
+                    <button type="submit" class="action-btn btn-danger" onclick="return confirm('Delete this file?')">
+                      <i class="fas fa-trash"></i> Delete
+                    </button>
+                  </form>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div style="text-align: center; padding: 2rem; color: #6c757d;">
+            <i class="fas fa-inbox" style="font-size: 2.2rem; margin-bottom: 1rem;"></i>
             <h4>No files uploaded yet</h4>
             <p>Upload your first PDF document to get started</p>
-        </div>
-    {% endif %}
-</div>
-
-<!-- Generated Excel Files Section -->
-<div class="modern-card" id="excel-files">
-    <div class="card-header">
-        <i class="fas fa-file-excel"></i>
-        <h3>Generated Excel Files</h3>
+          </div>
+        {% endif %}
+      </div>
     </div>
-
-    {% if excel_files %}
-        <div class="file-grid">
-            {% for file in excel_files %}
-                <div class="file-card">
-                    <div class="file-header">
-                        <div class="file-icon" style="color: #198754;">
-                            <i class="fas fa-file-excel"></i>
-                        </div>
-                        <div class="file-info">
-                            <h4>{{ file.name }}</h4>
-                            <div class="file-meta">{{ file.size }} • {{ file.timestamp }} • {{ file.sheets }}</div>
-                        </div>
-                    </div>
-                    <div class="file-actions">
-                        <a href="{{ url_for('preview_excel', filename=file.name) }}" target="_blank" class="action-btn btn-primary">
-                            <i class="fas fa-eye"></i> View
-                        </a>
-                        <a href="{{ url_for('excel_file', filename=file.name) }}" download class="action-btn btn-outline">
-                            <i class="fas fa-download"></i> Download
-                        </a>
-                        <form action="{{ url_for('delete_excel', filename=file.name) }}" method="post" style="display:inline;">
-                            <button type="submit" class="action-btn btn-danger" onclick="return confirm('Delete this file?')">
-                                <i class="fas fa-trash"></i> Delete
-                            </button>
-                        </form>
-                    </div>
-                </div>
-            {% endfor %}
+    <!-- Right: Generated Excels -->
+    <div class="bottom-right">
+      <div class="modern-card" id="excel-files">
+        <div class="card-header">
+          <i class="fas fa-file-excel"></i>
+          <h3>Generated Excel Files</h3>
         </div>
-    {% else %}
-        <div style="text-align: center; padding: 3rem; color: #6c757d;">
-            <i class="fas fa-chart-bar" style="font-size: 3rem; margin-bottom: 1rem;"></i>
+        <button id="deleteAllExcelsBtn"
+           class="btn btn-danger"
+           {% if not excel_files %}disabled{% endif %}
+           style="
+               display: inline-flex; align-items: center; gap: 0.6em;
+               font-size: 1rem; font-weight: 600; text-transform: uppercase;
+               letter-spacing: 0.08em; border-radius: 12px;
+               padding: 0.7em 1.4em; margin: 10px 0 20px 12px;
+               background: #dc3545; color: #fff; border: none;
+               box-shadow: 0 2px 10px rgba(220,53,69,0.14);
+               transition: background 0.2s, transform 0.13s; outline: none;
+               cursor: pointer;
+               opacity: {% if not excel_files %}0.6{% else %}1{% endif %};
+               pointer-events: {% if not excel_files %}none{% else %}auto{% endif %};
+           "
+           onmouseover="if(!this.disabled){this.style.background='#bb2d3b';this.style.transform='translateY(-2px) scale(1.03)'}"
+           onmouseout="if(!this.disabled){this.style.background='#dc3545';this.style.transform='none'}"
+        >
+          <i class="fas fa-trash" style="margin-right: 0.2em;"></i>
+          Delete All Excels
+        </button>
+        {% if excel_files %}
+          <div class="file-grid">
+            {% for file in excel_files %}
+              <div class="file-card">
+                <div class="file-header">
+                  <div class="file-icon" style="color: #198754;">
+                    <i class="fas fa-file-excel"></i>
+                  </div>
+                  <div class="file-info">
+                    <h4>{{ file.name }}</h4>
+                    <div class="file-meta">{{ file.size }} • {{ file.timestamp }} • {{ file.sheets }}</div>
+                  </div>
+                </div>
+                <div class="file-actions">
+                  <button class="action-btn btn-primary"
+                          onclick="previewFile('{{ url_for('preview_excel', filename=file.name) }}', '{{ file.name }}', 'excel')">
+                    <i class="fas fa-eye"></i> View
+                  </button>
+                  <a href="{{ url_for('excel_file', filename=file.name) }}" download class="action-btn btn-outline">
+                    <i class="fas fa-download"></i> Download
+                  </a>
+                  <form action="{{ url_for('delete_excel', filename=file.name) }}" method="post" style="display:inline;">
+                    <button type="submit" class="action-btn btn-danger" onclick="return confirm('Delete this file?')">
+                      <i class="fas fa-trash"></i> Delete
+                    </button>
+                  </form>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div style="text-align: center; padding: 2rem; color: #6c757d;">
+            <i class="fas fa-chart-bar" style="font-size: 2.2rem; margin-bottom: 1rem;"></i>
             <h4>No Excel files generated yet</h4>
             <p>Process your documents to generate Excel reports</p>
-        </div>
-    {% endif %}
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
 </div>
 
-<!-- JavaScript moved to inline to ensure it loads -->
 <script>
-// Global variables
 let selectedMethod = null;
-
-// Debug function to test if script is loaded
-console.log('Extraction page script loaded successfully');
-
-// Handle method change
 function handleMethodChange() {
-    const checkedRadio = document.querySelector('input[name="method"]:checked');
-
-    if (checkedRadio) {
-        selectedMethod = checkedRadio.value;
-
-        // Show selected method
-        const selectedDiv = document.getElementById('selected-method');
-        const selectedName = document.getElementById('selected-method-name');
-
-        if (selectedDiv && selectedName) {
-            selectedDiv.style.display = 'block';
-            selectedName.textContent = selectedMethod;
-        }
-
-        console.log('Selected method:', selectedMethod);
+  const checkedRadio = document.querySelector('input[name="method"]:checked');
+  if (checkedRadio && selectedMethod !== checkedRadio.value) {
+    selectedMethod = checkedRadio.value;
+    const selectedDiv = document.getElementById('selected-method');
+    const selectedName = document.getElementById('selected-method-name');
+    if (selectedDiv && selectedName) {
+      selectedDiv.style.display = 'block';
+      selectedName.textContent = selectedMethod;
     }
+  }
 }
-
-// File processing function
-function processFile(filename) {
-    console.log('Process button clicked for:', filename);
-    console.log('Current selected method:', selectedMethod);
-
-    if (!selectedMethod) {
-        alert('Please select a processing method first!');
-        console.log('No method selected - stopping process');
-        return;
-    }
-
-    if (confirm(`Process ${filename} with ${selectedMethod}?`)) {
-        console.log('User confirmed processing');
-
-        // Find the clicked button
-        const btn = event.target.closest('button');
-        if (!btn) {
-            console.error('Could not find button element');
-            return;
-        }
-
-        const originalText = btn.innerHTML;
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
-        btn.disabled = true;
-
-        console.log('Sending request to:', `/process/${selectedMethod}/${filename}`);
-
-        fetch(`/process/${selectedMethod}/${filename}`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            }
-        })
-        .then(response => {
-            console.log('Response status:', response.status);
-            console.log('Response ok:', response.ok);
-
-            if (response.ok) {
-                console.log('Processing successful, reloading page');
-                location.reload();
-            } else {
-                throw new Error(`HTTP ${response.status}: Processing failed`);
-            }
-        })
-        .catch(error => {
-            console.error('Processing error:', error);
-            alert('Error processing file: ' + error.message);
-            btn.innerHTML = originalText;
-            btn.disabled = false;
-        });
-    } else {
-        console.log('User cancelled processing');
-    }
-}
-
-// Test functions for console debugging
-window.testProcessFile = function(filename) {
-    processFile(filename || 'test.pdf');
-};
-
-window.testMethodSelection = function(method) {
-    const radio = document.querySelector(`input[name="method"][value="${method}"]`);
-    if (radio) {
-        radio.checked = true;
-        handleMethodChange();
-        console.log('Method set to:', method);
-    } else {
-        console.log('Method not found:', method);
-    }
-};
-
-// Initialize when page loads
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('DOM loaded - setting up event listeners');
-
-    // Check if elements exist
-    const processButtons = document.querySelectorAll('.process-btn');
-    const methodRadios = document.querySelectorAll('input[name="method"]');
-
-    console.log('Found process buttons:', processButtons.length);
-    console.log('Found method radios:', methodRadios.length);
-
-    // Add backup event listeners (in case onclick doesn't work)
-    processButtons.forEach((btn, index) => {
-        const filename = btn.getAttribute('data-filename');
-        console.log(`Button ${index}: ${filename}`);
-
-        btn.addEventListener('click', function(e) {
-            e.preventDefault();
-            console.log('Backup event listener triggered for:', filename);
-            processFile(filename);
-        });
+function processFile(filename, event) {
+  if (!selectedMethod) {
+    alert('Please select a processing method first!');
+    return;
+  }
+  if (confirm(`Process ${filename} with ${selectedMethod}?`)) {
+    const btn = event.target.closest('button');
+    if (!btn) return;
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+    btn.disabled = true;
+    fetch(`/process/${selectedMethod}/${filename}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' }
+    })
+    .then(response => {
+      if (response.ok) location.reload();
+      else throw new Error(`HTTP ${response.status}: Processing failed`);
+    })
+    .catch(error => {
+      alert('Error processing file: ' + error.message);
+      btn.innerHTML = originalText;
+      btn.disabled = false;
     });
+  }
+}
+function previewFile(url, filename, type) {
+  const previewArea = document.getElementById('document-preview-area');
+  previewArea.innerHTML = '';
+  let iframe = document.createElement('iframe');
+  iframe.id = "document-preview-frame";
+  iframe.allow = "autoplay";
+  iframe.src = url;
+  let fileBar = document.createElement('div');
+  fileBar.style.position = 'absolute';
+  fileBar.style.left = '14px';
+  fileBar.style.top = '14px';
+  fileBar.style.padding = '4px 18px 4px 8px';
+  fileBar.style.background = 'rgba(251,252,253,0.94)';
+  fileBar.style.borderRadius = '8px';
+  fileBar.style.color = '#344';
+  fileBar.style.boxShadow = '0 2px 8px #ccd9';
+  fileBar.style.fontWeight = 'bold';
+  fileBar.style.zIndex = '10';
+  fileBar.innerHTML = `<i class="fas ${type === 'pdf' ? 'fa-file-pdf' : 'fa-file-excel'}"></i> ${filename}`;
+  previewArea.appendChild(iframe);
+  previewArea.appendChild(fileBar);
+}
+document.addEventListener('DOMContentLoaded', function() {
+  const processButtons = document.querySelectorAll('.process-btn');
+  processButtons.forEach((btn) => {
+    const filename = btn.getAttribute('data-filename');
+    btn.addEventListener('click', function(e) {
+      e.preventDefault();
+      processFile(filename, e);
+    });
+  });
+  const deleteAllBtn = document.getElementById('deleteAllExcelsBtn');
+  if(deleteAllBtn){
+    deleteAllBtn.onclick = function() {
+      if (confirm("Delete ALL Excel files? This cannot be undone.")) {
+        fetch('/delete_all_excels', {method: 'POST'})
+          .then(res => res.json())
+          .then(() => location.reload());
+      }
+    }
+  }
 });
 </script>
 {% endblock %}

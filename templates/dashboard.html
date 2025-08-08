@@ -1,11 +1,13 @@
 {% extends "base.html" %}
 
+
 {% block title %}Dashboard - Invoice Processor{% endblock %}
 
 {% block page_title %}Dashboard{% endblock %}
 {% block page_description %}Overview of your invoice processing activities{% endblock %}
 
 {% block content %}
+
 <!-- Statistics Cards -->
 <div class="stats-grid">
     <div class="stat-card">
@@ -27,7 +29,7 @@
 </div>
 
 <!-- Quick Actions -->
-<div class="modern-card">
+<!-- <div class="modern-card">
     <div class="card-header">
         <i class="fas fa-bolt"></i>
         <h3>Quick Actions</h3>
@@ -42,5 +44,37 @@
             View Analytics
         </a>
     </div>
+</div> -->
+<!-- Document Type Navigation Buttons (All Red) -->
+<div class="modern-card" style="margin-top:2em;">
+    <div class="card-header">
+        <i class="fas fa-folder-open"></i>
+        <h3>Document Type Shortcuts</h3>
+    </div>
+    <div style="display: flex; gap: 1rem; flex-wrap: wrap; margin-top:1em;">
+        <!-- <a href="{{ url_for('extraction', type='invoice') }}" class="modern-btn btn-danger" style="background-color:#dc3545; border-color:#dc3545;">
+            <i class="fas fa-file-invoice"></i>
+            Invoice
+        </a> -->
+        <a href="{{ url_for('extraction', type='invoice') }}" class="modern-btn btn-danger" style="background-color:#dc3545; border-color:#dc3545;">
+            <i class="fas fa-file-invoice"></i>
+            Invoice
+        </a>
+
+        <a href="{{ url_for('extraction', type='bank_statement') }}" class="modern-btn btn-danger" style="background-color:#dc3545; border-color:#dc3545;">
+            <i class="fas fa-file-alt"></i>
+            Bank Statements
+        </a>
+        <a href="{{ url_for('extraction', type='audit_report') }}" class="modern-btn btn-danger" style="background-color:#dc3545; border-color:#dc3545;">
+            <i class="fas fa-file-audit"></i>
+            Audit Reports
+        </a>
+        <a href="{{ url_for('extraction', type='budgeting') }}" class="modern-btn btn-danger" style="background-color:#dc3545; border-color:#dc3545;">
+            <i class="fas fa-chart-pie"></i>
+            Budgeting &amp; Forecasting
+        </a>
+    </div>
 </div>
+
+
 {% endblock %}

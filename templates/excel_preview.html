@@ -8,6 +8,18 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
+    <!-- Add this at the top, before your table or preview area -->
+    <!-- <button id="deleteAllExcelsBtn" class="btn btn-danger">Delete All Excels</button> -->
+    <script>
+    document.getElementById('deleteAllExcelsBtn').onclick = function() {
+        if (confirm("Delete ALL Excel files? This cannot be undone.")) {
+            fetch('/delete_all_excels', {method: 'POST'})
+            .then(res => res.json())
+            .then(data => location.reload());
+        }
+    };
+    </script>
+
     <div class="excel-preview-container">
         <!-- Modern Header -->
         <div class="excel-header">

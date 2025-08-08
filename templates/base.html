@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Invoice Processor{% endblock %}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <!-- FontAwesome for icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     {% block extra_css %}{% endblock %}
 </head>
@@ -30,6 +31,7 @@
                 <p>Modern Invoice Processing</p>
             </div>
 
+            <!-- Sidebar Navigation -->
             <nav class="sidebar-nav">
                 <div class="nav-item">
                     <a href="{{ url_for('dashboard') }}" class="nav-link {% if request.endpoint == 'dashboard' %}active{% endif %}">
@@ -39,7 +41,7 @@
                 </div>
                 <div class="nav-item">
                     <a href="{{ url_for('extraction') }}" class="nav-link {% if request.endpoint == 'extraction' %}active{% endif %}">
-                        <i class="fas fa-extract"></i>
+                        <i class="fas fa-file-upload"></i>
                         Extraction
                     </a>
                 </div>
@@ -49,6 +51,26 @@
                         Visualization
                     </a>
                 </div>
+                <div class="nav-item">
+                    <a href="{{ url_for('directory') }}" class="nav-link {% if request.endpoint == 'directory' %}active{% endif %}">
+                        <i class="fas fa-folder"></i>
+                        Directory
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="{{ url_for('output_excels') }}" class="nav-link {% if request.endpoint == 'output_excels' %}active{% endif %}">
+                        <i class="fas fa-file-excel"></i>
+                        Output Excels
+                    </a>
+                </div>
+                
+                <div class="nav-item">
+                    <a href="{{ url_for('templates_page') }}" class="nav-link {% if request.endpoint == 'templates_page' %}active{% endif %}">
+                        <i class="fas fa-table"></i>
+                        Templates
+                    </a>
+                </div>
+                
             </nav>
         </div>
 
@@ -58,7 +80,6 @@
                 <h2>{% block page_title %}Dashboard{% endblock %}</h2>
                 <p>{% block page_description %}Welcome to your invoice processing dashboard{% endblock %}</p>
             </div>
-
             <div class="content-body">
                 {% block content %}{% endblock %}
             </div>

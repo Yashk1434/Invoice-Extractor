@@ -1,21 +1,258 @@
 {% extends "base.html" %}
-
-{% block title %}Visualization - Invoice Processor{% endblock %}
-
-{% block page_title %}Data Visualization{% endblock %}
-{% block page_description %}Analyze and visualize your extracted invoice data{% endblock %}
-
+{% block page_title %}Visualization{% endblock %}
 {% block content %}
-<div class="modern-card">
-    <div class="card-header">
-        <i class="fas fa-chart-line"></i>
-        <h3>Analytics Dashboard</h3>
+
+
+<!-- Inline CSS for tabs, bot icon, and chatbot window -->
+<style>
+.tabs {
+    display: flex; gap: 8px; margin-bottom: 18px;
+}
+.tab-btn {
+    background: #f6f7fb; color: #444;
+    font-weight: 600; border: none;
+    border-bottom: 2px solid transparent;
+    border-radius: 8px 8px 0 0;
+    padding: 0.7em 1.7em; font-size: 1em; cursor: pointer;
+    transition: background 0.18s, border-color 0.18s;
+}
+.tab-btn.active, .tab-btn:focus {
+    background: #fff; color: #0d6efd;
+    border-bottom: 2.5px solid #0d6efd;
+    outline: none;
+}
+.excel-tabs { display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap;}
+.excel-file-tab {
+    background: #f2f2fe; color: #2764ae;
+    border-radius: 6px; border: 1.5px solid #c6d2ef;
+    padding: 0.5em 1.25em;
+    font-size: 0.98em; font-weight: 500; cursor: pointer;
+    transition: background 0.18s, border 0.18s, color 0.18s;
+}
+.excel-file-tab:hover, .excel-file-tab:focus {
+    background: #e4eaff; color: #1d3c62; border-color: #8eb6ec; outline: none;
+}
+#excelVisualizationContent {
+    background: #fafbff;
+    min-height: 100px;
+    border-radius: 8px; margin-top: 12px; padding: 1.2em 1.2em 1.5em 1.2em;
+    border: 1.5px solid #f1f3f8;
+    box-shadow: 0 2px 12px rgba(70,100,255,0.05);
+    font-size: 1.1em;
+}
+/* --- BOT ICON --- */
+#botIcon {
+    position: fixed;
+    bottom: 32px;
+    right: 32px;
+    width: 64px; height: 64px;
+    background: #0d6efd;
+    border-radius: 50%;
+    box-shadow: 0 4px 16px rgba(13,111,253,0.15);
+    display: flex; justify-content: center; align-items: center;
+    cursor: pointer;
+    z-index: 12000;
+    transition: background 0.2s, box-shadow 0.2s;
+    border: 4px solid #fff;
+}
+#botIcon:hover {
+    background: #e06f67;
+    box-shadow: 0 6px 24px #e06f6740;
+}
+#botIcon .bot-emoji {
+    font-size: 2.15em; color: #fff;
+    filter: drop-shadow(0 1px 5px #0d6efd33);
+}
+
+/* --- SLIDING CHATBOT DRAWER --- */
+#aiAssistantChatbot {
+    position: fixed;
+    bottom: 32px;
+    right: 32px;
+    width: 350px;
+    max-width: calc(100vw - 24px);
+    height: 440px;
+    background: #fff;
+    box-shadow: -5px 5px 34px rgba(13, 110, 253, 0.20);
+    border-radius: 20px 20px 20px 20px;
+    border: 2.5px solid #e06f6730;
+    z-index: 13000;
+    display: flex; flex-direction: column;
+    transition: opacity 0.28s, transform 0.32s;
+    opacity: 1;
+    transform: translateY(0) scale(1);
+}
+#aiAssistantChatbot.closed {
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(40px) scale(0.95);
+}
+.chatbot-header {
+    background: #0d6efd;
+    color: #fff; font-weight: 600; letter-spacing: 0.03em;
+    border-radius: 17px 17px 0 0;
+    padding: 17px 18px 12px 17px;
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 1.07em; user-select: none;
+}
+.chatbot-header .close-x {
+    font-size: 1.25em; color: #fff; cursor: pointer; background: none; border: none; padding: 0 0.25em;
+    border-radius: 8px;
+}
+.chatbot-header .close-x:hover { color: #ffd6cf; background: #0650a6; }
+
+.chatbot-body {
+    flex: 1; padding: 1em 1.15em;
+    overflow-y: auto; background: #f7f6fe; font-size: 0.99em;
+}
+#chatbotForm {
+    display: flex; border-top: 1.5px solid #e06f6740; background: #fff;
+    border-radius: 0 0 18px 18px; box-shadow: none; margin: 0;
+}
+#botInput {
+    flex: 1; border: none; outline: none; padding: 13px 11px;
+    font-size: 16px; background: #f6f7fb; border-radius: 0 0 0 18px;
+}
+#chatbotForm button {
+    border: none;
+    background: #e06f67;
+    color: #fff;
+    padding: 0 18px;
+    font-size: 16px;
+    font-weight: 600;
+    border-radius: 0 0 18px 0;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+#chatbotForm button:hover { background: #bb2d3b; }
+
+@media (max-width: 520px) {
+    #aiAssistantChatbot {
+        right: 6px; left: 6px; width: unset; min-width: 0; border-radius: 12px;
+        height: 65vw; max-height: 88vw;
+    }
+    #botIcon { right: 13px; bottom: 13px;}
+}
+</style>
+
+<div class="tabs">
+    <button class="tab-btn active" id="excelTab" onclick="showVisTab('excel')">Excel Visualization</button>
+    <button class="tab-btn" id="filedataTab" onclick="showVisTab('filedata')">File Data Visualization</button>
+</div>
+
+<div id="excelTabContent">
+    <div class="excel-tabs">
+        {% for excel in excel_files %}
+        <button class="excel-file-tab" onclick="selectExcel('{{ excel }}')">{{ excel }}</button>
+        {% endfor %}
     </div>
-    
-    <div style="text-align: center; padding: 4rem; color: #6c757d;">
-        <i class="fas fa-chart-bar" style="font-size: 4rem; margin-bottom: 2rem; color: var(--primary-color);"></i>
-        <h3>Visualization Coming Soon</h3>
-        <p>Advanced analytics and data visualization features will be available here.</p>
+    <div id="excelVisualizationContent">
+        <p>Select an Excel file to visualize here. (Charts/summary go here.)</p>
     </div>
 </div>
+<div id="filedataTabContent" style="display:none">
+    <p>Coming soon...</p>
+</div>
+
+<!-- BOT ICON button (bottom right) -->
+<div id="botIcon" title="AI Assistant" onclick="openChatbot()">
+    <span class="bot-emoji" aria-label="AI Assistant">🤖</span>
+</div>
+<!-- SLIDING AI Assistant Chatbot -->
+<div id="aiAssistantChatbot" class="closed">
+    <div class="chatbot-header">
+        <span><i class="fas fa-robot" style="margin-right: 0.3em; color: #ffd6cf;"></i>AI Assistant</span>
+        <button class="close-x" title="Close" onclick="closeChatbot()">&#10005;</button>
+    </div>
+    <div class="chatbot-body" id="chatbotConversation"></div>
+    <form id="chatbotForm" autocomplete="off" onsubmit="return sendBotMessage(event)">
+        <input type="text" id="botInput" placeholder="Ask about your Excel files...">
+        <button type="submit">Send</button>
+    </form>
+</div>
+
+
+<script>
+function showVisTab(tab) {
+    document.getElementById('excelTabContent').style.display = (tab === 'excel') ? '' : 'none';
+    document.getElementById('filedataTabContent').style.display = (tab === 'filedata') ? '' : 'none';
+    document.getElementById('excelTab').classList.toggle('active', tab === 'excel');
+    document.getElementById('filedataTab').classList.toggle('active', tab === 'filedata');
+}
+function selectExcel(excel) {
+    document.getElementById('excelVisualizationContent').innerHTML =
+        `<b>Selected Excel: ${excel}</b><br>Visualization coming soon.`;
+}
+// Chatbot controls
+function openChatbot() {
+    document.getElementById('aiAssistantChatbot').classList.remove('closed');
+    document.getElementById('botInput').focus();
+}
+function closeChatbot() {
+    document.getElementById('aiAssistantChatbot').classList.add('closed');
+}
+// function sendBotMessage(e) {
+//     e.preventDefault();
+//     const input = document.getElementById('botInput');
+//     const msg = input.value.trim();
+//     if (!msg) return false;
+//     const chat = document.getElementById('chatbotConversation');
+//     chat.innerHTML += `<div><b>You:</b> ${msg}</div>`;
+//     input.value = '';
+//     fetch('/chat_with_bot?page=templates', {
+//         method: 'POST',
+//         headers: {'Content-Type':'application/json'},
+//         body: JSON.stringify({message: msg})
+//     })
+//     .then(res => res.json())
+//     .then(data => {
+//         // chat.innerHTML += `<div style="margin-left:1em;color:#e06f67"><b>AI:</b> ${data.response}</div>`;
+//         chat.innerHTML += `<div style="margin-left:1em;color:#e06f67"><b>AI:</b> ${data.response.replace(/\n/g, '<br>')}</div>`;
+
+//         chat.scrollTop = chat.scrollHeight;
+//     });
+//     return false;
+// }
+function sendBotMessage(e) {
+    e.preventDefault();
+    const input = document.getElementById('botInput');
+    const msg = input.value.trim();
+    if (!msg) return false;
+    const chat = document.getElementById('chatbotConversation');
+    chat.innerHTML += `<div><b>You:</b> ${msg}</div>`;
+    input.value = '';
+    chat.innerHTML += `<div style="margin-left:1em;color:#e06f67"><b>AI:</b> <span id="bot-typing">Thinking...</span></div>`;
+    chat.scrollTop = chat.scrollHeight;
+    fetch('/chat_with_bot', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({message: msg})
+    })
+    .then(res => {
+        // If the network call fails (e.g. Flask not running):
+        if (!res.ok) throw new Error("Server error: "+res.status);
+        return res.json();
+    })
+    .then(data => {
+        chat.innerHTML = chat.innerHTML.replace('<span id="bot-typing">Thinking...</span>',
+            data.response ? data.response.replace(/\n/g, '<br>') : '(No response)');
+        chat.scrollTop = chat.scrollHeight;
+    })
+    .catch(error => {
+        chat.innerHTML = chat.innerHTML.replace('<span id="bot-typing">Thinking...</span>',
+            `<span style="color:red;">[Error: ${error.message}]</span>`);
+        chat.scrollTop = chat.scrollHeight;
+        // ROBUST: print fetch error to browser console for deeper debugging
+        console.error("Chatbot AJAX error:", error);
+    });
+    return false;
+}
+
+
+// Optional: pressing ESC closes chatbot
+window.addEventListener('keydown', function(e){
+    if(e.key==='Escape'){ closeChatbot(); }
+});
+</script>
+
 {% endblock %}

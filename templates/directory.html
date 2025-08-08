@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+{% block page_title %}Directory{% endblock %}
+{% block content %}
+
+<!-- Uploaded Invoices -->
+<div class="modern-card">
+  <div class="card-header">
+    <i class="fas fa-folder"></i>
+    <h3>Directory: Uploaded Invoices</h3>
+  </div>
+  {% if uploaded_files %}
+    <ul style="padding-left: 0; list-style: none; margin: 0;">
+      {% for pdf in uploaded_files if pdf.name.lower().endswith('.pdf') %}
+        <li style="display: flex; align-items: center; gap: 1em; margin-bottom: 1.1em; font-size: 1.08em;">
+          <span style="font-size: 1.5em; flex-shrink:0;">📄</span>
+          <span style="flex-grow:1;">{{ pdf.name }}</span>
+          <span style="color:#888;font-size:0.97em;">({{ pdf.size }}, {{ pdf.timestamp }})</span>
+          <a href="{{ url_for('uploaded_file', filename=pdf.name) }}" target="_blank" title="View">
+            <i class="fas fa-eye"></i>
+          </a>
+          <a href="{{ url_for('uploaded_file', filename=pdf.name) }}" download title="Download">
+            <i class="fas fa-download"></i>
+          </a>
+          <form action="{{ url_for('delete_upload', filename=pdf.name) }}" method="post" style="display: inline; margin:0;">
+            <button type="submit" title="Delete" onclick="return confirm('Delete this PDF?')" style="background: none; border: none; cursor:pointer;">
+              <i class="fas fa-trash" style="color:#B22222;"></i>
+            </button>
+          </form>
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <div style="color:#888; padding:1em;">No invoices uploaded yet.</div>
+  {% endif %}
+</div>
+
+<!-- Output Excels Section (with Download All / Delete All) -->
+<div class="modern-card output-excels-section" style="margin-top: 2.5em;">
+  <div class="card-header">
+    <i class="fas fa-file-excel"></i>
+    <h3>Output Excels</h3>
+  </div>
+  <div style="display: flex; gap: 0.8em; margin-bottom: 1.3em;">
+    <a href="{{ url_for('download_all_excels') }}"
+       class="modern-btn btn-outline-primary"
+       {% if not excel_files %} style="pointer-events:none;opacity:0.5;" {% endif %}>
+      <i class="fas fa-download"></i> Download All
+    </a>
+    <button onclick="handleDeleteAllExcels()"
+        class="modern-btn btn-danger"
+        {% if not excel_files %} disabled style="opacity:0.5;" {% endif %}>
+      <i class="fas fa-trash"></i> Delete All
+    </button>
+  </div>
+  {% if excel_files %}
+    <table class="excel-table">
+      <thead>
+        <tr>
+          <th>File Name</th>
+          <th>Size</th>
+          <th>Date</th>
+          <th>Sheets</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for file in excel_files %}
+          <tr>
+            <td>{{ file.name }}</td>
+            <td>{{ file.size }}</td>
+            <td>{{ file.timestamp }}</td>
+            <td>{{ file.sheets }}</td>
+            <td>
+              <a href="{{ url_for('excel_file', filename=file.name) }}" title="Download" download>
+                <i class="fas fa-download"></i>
+              </a>
+              <a href="{{ url_for('preview_excel', filename=file.name) }}" title="Preview">
+                <i class="fas fa-expand"></i>
+              </a>
+              <form action="{{ url_for('delete_excel', filename=file.name) }}" method="post" style="display:inline;">
+                <button type="submit" title="Delete" onclick="return confirm('Delete this file?');"
+                  style="border:none;background:none;color:#dc3545;padding:0 2px;">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </form>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <div style="color:#888; padding: 1em;">No extracted Excel files yet.</div>
+  {% endif %}
+</div>
+
+<script>
+function handleDeleteAllExcels() {
+  if(confirm("This will permanently delete ALL extracted Excel files. Are you sure?")) {
+    fetch('{{ url_for("delete_all_excels") }}', {method: 'POST'})
+      .then(r => r.json())
+      .then(res => {
+        if(res.status === "success") {
+          alert("All Excel files deleted!");
+          location.reload();
+        } else {
+          alert("Some files could not be deleted.");
+          location.reload();
+        }
+      });
+  }
+}
+</script>
+{% endblock %}

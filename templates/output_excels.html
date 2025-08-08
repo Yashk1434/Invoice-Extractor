@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}Output Excels - Invoice Processor{% endblock %}
+{% block page_title %}Output Excels{% endblock %}
+{% block page_description %}All extracted Excel files ready for download, preview, or deletion{% endblock %}
+
+{% block content %}
+<div class="output-excels-section">
+    <h2>Output Excels <span style="font-size:0.67em; color: var(--text-muted); font-weight:400;">({{ excel_files|length }})</span></h2>
+    {% if excel_files %}
+    <table class="excel-table">
+        <thead>
+            <tr>
+                <th>File Name</th>
+                <th>Size</th>
+                <th>Date</th>
+                <th>Sheets</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for file in excel_files %}
+            {% set fname = file.name if file.name is defined else file %}
+            <tr>
+                <td title="{{ fname }}">{{ fname }}</td>
+                <td>{{ file.size if file.size is defined else "--" }}</td>
+                <td>{{ file.timestamp if file.timestamp is defined else "--" }}</td>
+                <td>{{ file.sheets if file.sheets is defined else "--" }}</td>
+                <td>
+                    <!-- Download -->
+                    <a href="{{ url_for('excel_file', filename=fname) }}" title="Download" download>
+                        <i class="fas fa-download"></i>
+                    </a>
+                    <!-- Expand/Preview -->
+                    <a href="{{ url_for('preview_excel', filename=fname) }}" title="Expand/Preview">
+                        <i class="fas fa-expand"></i>
+                    </a>
+                    <!-- Delete -->
+                    <form action="{{ url_for('delete_excel', filename=fname) }}" method="POST" style="display:inline;">
+                        <button type="submit" title="Delete"
+                                onclick="return confirm('Delete this file?');"
+                                style="border:none;background:none;color:#dc3545;padding:0 2px;">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </form>
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+        <p>No extracted excel files yet.</p>
+    {% endif %}
+</div>
+{% endblock %}

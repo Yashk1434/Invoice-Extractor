@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+{% block page_title %}Templates{% endblock %}
+{% block content %}
+<style>
+.templates-container {
+    display: flex; gap: 2em; margin-top: 2.5em; flex-wrap: wrap;
+}
+.card-custom {
+    border-radius: 15px; box-shadow: 0 2px 12px #0001;
+    background: #fff; padding: 1.8em 1.8em 1.2em 1.8em; margin-bottom: 1.5em;
+}
+.card-template {
+    background: #fff7e7; min-width: 320px; flex: 1 1 320px;
+    display: flex; flex-direction: column; justify-content: space-between;
+}
+.card-preview {
+    background: #eef9fb; min-width: 350px; flex: 2 1 640px;
+    display: flex; flex-direction: column;
+}
+.card-header-custom {
+    font-weight: 700; font-size: 1.13em;
+    margin-bottom: 1.2em; display: flex; align-items: center; gap: 0.7em;
+}
+.preview-btn-group {
+    margin-left: auto;
+}
+.btn-group-custom {
+    display: flex; gap: 1em; align-items: center; margin-bottom: 1em;
+}
+.table-preview-area {
+    overflow: auto; max-height: 380px;
+    background: #fff; border-radius: 10px; padding: 1em 0.5em 0.5em 0.5em;
+    border: 1px solid #dbedfa; font-size: 0.97em;
+}
+.excel-preview-table th {
+    position: sticky; top: 0;
+    background: #eaf5fb; z-index: 1;
+}
+/* --- Custom download/delete buttons --- */
+.btn-download {
+    background-color: #28a745;
+    color: white;
+    font-weight: 600;
+    border-radius: 6px;
+    border: none;
+    padding: 0.35rem 0.95rem;
+    font-size: 0.97rem;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3em;
+    transition: background 0.18s;
+}
+.btn-download:hover, .btn-download:focus {
+    background-color: #218838;
+    color: white;
+}
+.btn-delete {
+    background-color: #dc3545;
+    color: white;
+    font-weight: 600;
+    border-radius: 6px;
+    border: none;
+    padding: 0.35rem 0.95rem;
+    font-size: 0.97rem;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3em;
+    transition: background 0.18s;
+}
+.btn-delete:hover, .btn-delete:focus {
+    background-color: #c82333;
+    color: white;
+}
+</style>
+
+<div class="modern-card" style="padding:2em 2.5em; border-radius: 13px; box-shadow:0 2px 12px #0001;">
+    <div class="card-header" style="display:flex;align-items:center;gap:0.7em;margin-bottom:1em;">
+        <i class="fas fa-table" style="font-size:1.25em;color:#df7139;"></i>
+        <h3 style="margin:0;font-size:1.25em;">Upload or Replace Template Excel</h3>
+    </div>
+    <form action="{{ url_for('upload_template') }}" method="post" enctype="multipart/form-data"
+        style="margin-bottom:1.5em; display:flex; gap:1.2em; flex-wrap:wrap;">
+        <input type="file" name="template_file" accept=".xlsx,.xlsm,.xls" required
+            style="border-radius:8px; padding:0.5em 1em; border:1px solid #d1d5db;font-size:1rem;">
+        <button type="submit" class="btn btn-success"
+                style="padding:0.5em 2em; border-radius:8px; font-weight:600;">
+            <i class="fas fa-upload"></i> Upload/Replace
+        </button>
+    </form>
+    {% if current_template %}
+    <div style="font-weight:500; color:#157347; margin-bottom:1em;">
+        Current active template: <b>{{ current_template }}</b>
+    </div>
+    {% else %}
+    <div style="color:#888;">No template file uploaded yet</div>
+    {% endif %}
+</div>
+
+<div class="templates-container">
+    <div class="card-custom card-template">
+        <div>
+            <div class="card-header-custom" style="color:#ad830f;">
+                <i class="fas fa-file-excel"></i> Active Filled Template
+            </div>
+            {% if filled_template_exists %}
+                <div class="btn-group-custom">
+                    <a href="{{ url_for('download_filled_template') }}" class="btn-download">
+                        <i class="fas fa-download"></i> Download
+                    </a>
+                    <form action="{{ url_for('delete_filled_template') }}" method="post" style="margin:0;">
+                        <button type="submit" class="btn-delete">
+                            <i class="fas fa-trash"></i> Delete
+                        </button>
+                    </form>
+                </div>
+                <div style="color:#a07b13; font-weight:400; font-size:0.97em;">
+                    Each extraction appends to this template using header matching.
+                </div>
+            {% else %}
+                <div style="color:#666; font-style:italic; font-size:0.95em;">No filled template available.</div>
+            {% endif %}
+        </div>
+    </div>
+    <div class="card-custom card-preview">
+        <div class="card-header-custom" style="color:#0291a7;">
+            <i class="fas fa-eye"></i> Preview Filled Template
+            {% if filled_template_exists %}
+            <div class="preview-btn-group">
+                <a href="{{ url_for('download_filled_template') }}" class="btn-download" style="margin-left:15px;">
+                    <i class="fas fa-file-excel"></i> Download Excel
+                </a>
+            </div>
+            {% endif %}
+        </div>
+        <div class="table-preview-area">
+            {% if filled_template_preview %}
+                {{ filled_template_preview | safe }}
+            {% else %}
+                <div style="font-style:italic; color:#777;">No preview available.</div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
